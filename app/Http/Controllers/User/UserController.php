@@ -64,21 +64,61 @@ class UserController extends Controller
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\Response
      */
     public function update(Request $request, $id)
     {
-        //
+        $user = User::findOrFail($id);
+
+        $rules = [
+            'email'     => 'email|email|unique:users, email,'. $user->id, //Except the current emat
+            'password'  => 'min:6|confirmed',
+            'admin'     => 'in:' . User::ADMIN_USER . ',' . User::REGULAR_USER, //Select between the two values
+        ];
+
+        //Check for the updateable fields
+        if ($request->has('name')){
+            $user->name = $request->name; //Update the name field to the new nam coming fro the request
+        }
+        if($request->has('email') && $user->email != $request->email){
+            //Update all the neccessary field
+            $user->verify = User::UNVERIFIED_USER;
+            $user->verification_token = User::generateVerificationCode();
+            $user->email = $request->email;
+        }
+        if($request->has('password')){
+            $user->password = bcrypt($request->password);
+
+        }
+        if($request->has('admin')){
+            if(!$user->isVerified()){
+                return response()->json(['error' => 'only verified users can modify the admin field', 'code' => 409], 409);
+            }
+            $user->admin = $request->admin; //makes changes to the field.
+
+        }
+
+        //Tells the user something has been changed
+        if(!$user->isDirty()){
+            return response()->json(['error' => 'You have to specify a different value to update', 'code' => 422], 422);
+        }
+        //Otherwise Save the changes
+        $user->save();
+        //Then the instance of the saved data
+        return response()->json(['data' => $user], 200); //200 means response OK
     }
 
     /**
      * Remove the specified resource from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\Response
      */
     public function destroy($id)
     {
-        //
+        $user = User::findOrFail($id);
+        $user->delete();
+        //Then the instance of the deleted data
+        return response()->json(['data' => $user], 200); //200 means response OK
     }
 }

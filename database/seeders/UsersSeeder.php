@@ -14,7 +14,7 @@ class UsersSeeder extends Seeder
      */
     public function run()
     {
-        $usersQuantity        = 200;
+        $usersQuantity        = 1000;
         User::factory()->times($usersQuantity)->create();
     }
 }
