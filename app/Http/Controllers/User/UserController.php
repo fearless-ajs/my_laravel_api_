@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\User;
 
+use App\Http\Controllers\ApiController;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 
-class UserController extends Controller
+class UserController extends ApiController
 {
     /**
      * Display a listing of the resource.
@@ -16,7 +17,8 @@ class UserController extends Controller
     public function index()
     {
         $users = User::all();
-        return response()->json(['data' => $users], 200); //200 means response OK
+        //Hands over the response to showAll() in ApiResponser class
+        return $this->showAll($users);
     }
 
 
@@ -44,7 +46,7 @@ class UserController extends Controller
         $data['admin']             = User::REGULAR_USER;
 
         $user = User::create($data);
-        return response()->json(['data' => $user], 201); //201 means data created
+        return $this->showOne($user, 201);
     }
 
     /**
@@ -56,7 +58,7 @@ class UserController extends Controller
     public function show($id)
     {
         $user = User::findOrFail($id);
-        return response()->json(['user' => $user], 200);
+        return $this->showOne($user);
     }
 
     /**
@@ -92,7 +94,7 @@ class UserController extends Controller
         }
         if($request->has('admin')){
             if(!$user->isVerified()){
-                return response()->json(['error' => 'only verified users can modify the admin field', 'code' => 409], 409);
+                return $this->errorResponse('only verified users can modify the admin field', 409);
             }
             $user->admin = $request->admin; //makes changes to the field.
 
@@ -100,12 +102,12 @@ class UserController extends Controller
 
         //Tells the user something has been changed
         if(!$user->isDirty()){
-            return response()->json(['error' => 'You have to specify a different value to update', 'code' => 422], 422);
+            return $this->errorResponse('You have to specify a different value to update', 422);
         }
         //Otherwise Save the changes
         $user->save();
-        //Then the instance of the saved data
-        return response()->json(['data' => $user], 200); //200 means response OK
+        //Then return the instance of the saved data
+        return $this->showOne($user);
     }
 
     /**
@@ -119,6 +121,6 @@ class UserController extends Controller
         $user = User::findOrFail($id);
         $user->delete();
         //Then the instance of the deleted data
-        return response()->json(['data' => $user], 200); //200 means response OK
+        return $this->showOne($user); //Returns to the ApiResponser Trait
     }
 }

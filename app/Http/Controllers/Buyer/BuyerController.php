@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Buyer;
 
+use App\Http\Controllers\ApiController;
 use App\Http\Controllers\Controller;
 use App\Models\Buyer;
 use Illuminate\Http\Request;
 
-class BuyerController extends Controller
+class BuyerController extends ApiController
 {
     /**
      * Display a listing of the resource.
@@ -16,7 +17,8 @@ class BuyerController extends Controller
     public function index()
     {
         $buyers = Buyer::has('transactions')->get(); //if the user has a transaction(Buyers doesn't have a table, it extends User model)
-        return response()->json(['data' => $buyers], 200); //200 means response OK
+        //Hands over the response to showAll() in ApiResponser class
+        return $this->showAll($buyers);
     }
 
     /**
@@ -28,6 +30,7 @@ class BuyerController extends Controller
     public function show($id)
     {
         $buyer = Buyer::has('transactions')->findOrFail($id);
-        return response()->json(['data' => $buyer], 200); //200 means response OK
+        //Hands over the response to showOne() in ApiResponser class
+        return $this->showOne($buyer);
     }
 }
